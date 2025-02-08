@@ -70,6 +70,7 @@ import time
 
 # ✅ Configure Gemini API with error handling
 if "GEMINI_API_KEY" in st.secrets:
+    st.write("API Key:", st.secrets.get("GEMINI_API_KEY"))
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     model = genai.GenerativeModel("gemini-1.5-flash")
 else:
