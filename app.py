@@ -5,6 +5,7 @@ import os
 import tempfile
 import base64
 from PIL import Image
+import io
 
 # ✅ Configure Gemini API
 if "GEMINI_API_KEY" in st.secrets:
@@ -28,7 +29,7 @@ def text_to_speech(text):
         tts = gTTS(text=text, lang="en")
         tts_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3").name
         tts.save(tts_path)
-        
+
         # Convert to base64 for embedding in HTML
         with open(tts_path, "rb") as audio_file:
             audio_base64 = base64.b64encode(audio_file.read()).decode()
@@ -43,27 +44,46 @@ def text_to_speech(text):
 # ✅ Streamlit UI
 st.title("🎤 Vocal Eyes")
 
-# ✅ JavaScript for Auto Camera Capture
+# ✅ JavaScript to access **rear camera** and take an automatic picture
 st.markdown("""
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <button id="capture" style="display:none;">Capture</button>
+    
     <script>
-        function autoCapture() {
-            var camButton = document.querySelector('.stCamera button');
-            if (camButton) {
-                camButton.click();
-                setTimeout(function() {
-                    var captureButton = document.querySelector('.stCamera button[data-testid="camera-button"]');
-                    if (captureButton) {
-                        captureButton.click();
-                    }
-                }, 3000);
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+            } catch (err) {
+                console.error("Camera access error: ", err);
             }
         }
-        setTimeout(autoCapture, 1000);
+
+        function captureImage() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert to Base64 and send to Streamlit
+            const imageData = canvas.toDataURL('image/png');
+            fetch('/upload_image', { method: 'POST', body: JSON.stringify({ image: imageData }) });
+        }
+
+        window.onload = () => {
+            startCamera();
+            setTimeout(() => { captureImage(); }, 3000);  // Auto-capture after 3 seconds
+        };
     </script>
 """, unsafe_allow_html=True)
 
-# ✅ Camera input
-image_file = st.camera_input("Auto Capturing...")
+# ✅ Image Capture
+image_file = st.file_uploader("Or Upload an Image", type=["png", "jpg", "jpeg"])
 
 if image_file:
     # Open the image and display it
@@ -76,7 +96,7 @@ if image_file:
 
     # Convert description to speech and play audio
     audio_base64 = text_to_speech(description)
-    
+
     if audio_base64:
         # ✅ Embed base64 audio in HTML for auto-play
         audio_html = f"""
