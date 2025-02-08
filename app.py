@@ -1,11 +1,9 @@
 import streamlit as st
 import google.generativeai as genai
-from google.cloud import texttospeech
+from gtts import gTTS
 import os
 import tempfile
-import base64
 from PIL import Image
-import time
 
 # ✅ Configure Gemini API
 if "GEMINI_API_KEY" in st.secrets:
@@ -13,14 +11,6 @@ if "GEMINI_API_KEY" in st.secrets:
     model = genai.GenerativeModel("gemini-1.5-flash")
 else:
     st.error("⚠️ API Key not found! Please check Streamlit Secrets.")
-    st.stop()
-
-# ✅ Configure Google Cloud TTS
-if "GOOGLE_APPLICATION_CREDENTIALS" in st.secrets:
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = st.secrets["GOOGLE_APPLICATION_CREDENTIALS"]
-    client = texttospeech.TextToSpeechClient()
-else:
-    st.error("⚠️ Google Cloud TTS Key missing! Please set GOOGLE_APPLICATION_CREDENTIALS.")
     st.stop()
 
 def generate_description(image):
@@ -31,57 +21,40 @@ def generate_description(image):
     except Exception as e:
         return f"Error generating description: {str(e)}"
 
-def google_tts(text):
-    """Converts text to speech using Google Cloud TTS and returns audio file path."""
+def text_to_speech(text):
+    """Converts text to speech using gTTS and returns the audio file path."""
     try:
-        synthesis_input = texttospeech.SynthesisInput(text=text)
-        voice = texttospeech.VoiceSelectionParams(language_code="en-US", ssml_gender=texttospeech.SsmlVoiceGender.FEMALE)
-        audio_config = texttospeech.AudioConfig(audio_encoding=texttospeech.AudioEncoding.MP3)
-        
-        response = client.synthesize_speech(input=synthesis_input, voice=voice, audio_config=audio_config)
-        
+        tts = gTTS(text=text, lang="en")
         tts_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3").name
-        with open(tts_path, "wb") as out:
-            out.write(response.audio_content)
-        
+        tts.save(tts_path)
         return tts_path
     except Exception as e:
-        st.error(f"Google TTS Error: {e}")
+        st.error(f"Text-to-speech error: {e}")
         return None
-
-def autoplay_audio(file_path):
-    """Encodes audio to Base64 and autoplays it."""
-    with open(file_path, "rb") as audio_file:
-        audio_bytes = audio_file.read()
-        audio_base64 = base64.b64encode(audio_bytes).decode()
-
-    # Inject JavaScript + HTML to autoplay
-    st.markdown(
-        f"""
-        <audio autoplay>
-            <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
-        </audio>
-        """,
-        unsafe_allow_html=True,
-    )
 
 # ✅ Streamlit UI
 st.title("🎤 Vocal Eyes")
 
-# ✅ JavaScript to auto-open camera (for mobile)
-st.markdown(
-    """
+# ✅ JavaScript for Auto Camera Capture
+st.markdown("""
     <script>
-        setTimeout(function() {
-            var camInput = document.querySelector("input[type='file']");
-            if (camInput) { camInput.click(); }
-        }, 1000);
+        function autoCapture() {
+            var camButton = document.querySelector('.stCamera button');
+            if (camButton) {
+                camButton.click();
+                setTimeout(function() {
+                    var captureButton = document.querySelector('.stCamera button[data-testid="camera-button"]');
+                    if (captureButton) {
+                        captureButton.click();
+                    }
+                }, 3000);
+            }
+        }
+        setTimeout(autoCapture, 1000);
     </script>
-    """,
-    unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
 
-# ✅ Auto Capture Image
+# ✅ Camera input
 image_file = st.camera_input("Auto Capturing...")
 
 if image_file:
@@ -93,12 +66,23 @@ if image_file:
     description = generate_description(image)
     st.write(f"**📝 Description:** {description}")
 
-    # Convert description to speech and autoplay
-    audio_path = google_tts(description)
+    # Convert description to speech and play audio
+    audio_path = text_to_speech(description)
+    
     if audio_path:
-        autoplay_audio(audio_path)
+        with open(audio_path, "rb") as audio_file:
+            audio_bytes = audio_file.read()
+        
+        # ✅ Embed JavaScript to auto-play the audio
+        audio_html = f"""
+            <audio id="audio" autoplay>
+                <source src="data:audio/mp3;base64,{audio_bytes.hex()}" type="audio/mp3">
+            </audio>
+            <script>
+                document.getElementById('audio').play();
+            </script>
+        """
+        st.markdown(audio_html, unsafe_allow_html=True)
 
-        # ✅ Auto close after speaking
-        st.write("✅ **Closing in 5 seconds...**")
-        time.sleep(5)
-        st.experimental_rerun()  # Refresh the app for the next capture
+        # ✅ Remove temporary audio file
+        os.remove(audio_path)
