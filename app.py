@@ -4,6 +4,7 @@ from gtts import gTTS
 import os
 import tempfile
 from PIL import Image
+import time
 
 # Configure Gemini API
 if "GEMINI_API_KEY" in st.secrets:
@@ -16,7 +17,7 @@ else:
 def generate_description(image):
     """Generates an AI-based description for the given image."""
     try:
-        response = model.generate_content(["Describe this image in detail for a blind person in 40 words:", image])
+        response = model.generate_content(["Describe this image for a blind person in 20 words:", image])
         return response.text if response else "No description available"
     except Exception as e:
         return f"Error generating description: {str(e)}"
@@ -35,33 +36,22 @@ def text_to_speech(text):
 # Streamlit UI
 st.title("🎤 Vocal Eyes")
 
-# JavaScript to trigger camera and auto-capture
-st.markdown("""
-    <script>
-        // Function to trigger camera and capture
-        function autoCapture() {
-            // Find the camera button and click it
-            var camButton = document.querySelector('.stCamera button');
-            if (camButton) {
-                camButton.click();
-                
-                // Wait briefly and then find and click the capture button
-                setTimeout(function() {
-                    var captureButton = document.querySelector('.stCamera button[data-testid="camera-button"]');
-                    if (captureButton) {
-                        captureButton.click();
-                    }
-                }, 3000);  // Wait 3 seconds before capturing
-            }
-        }
-        
-        // Run auto-capture when page loads
-        setTimeout(autoCapture, 1000);
-    </script>
-""", unsafe_allow_html=True)
+# Initialize countdown
+if 'countdown' not in st.session_state:
+    st.session_state.countdown = 3
 
-# Camera input
-image_file = st.camera_input("Auto Capturing...")
+# Display countdown
+if st.session_state.countdown > 0:
+    st.write(f"📸 Capturing in {st.session_state.countdown} seconds...")
+    time.sleep(1)
+    st.session_state.countdown -= 1
+    st.rerun()
+
+# Create camera placeholder
+camera_placeholder = st.empty()
+
+# Take photo
+image_file = camera_placeholder.camera_input(label="Taking photo...", key="camera")
 
 if image_file:
     # Process the captured image
