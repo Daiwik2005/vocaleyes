@@ -58,7 +58,6 @@
 #     os.remove(audio_path)
 
 
-
 import streamlit as st
 import google.generativeai as genai
 from gtts import gTTS
@@ -69,81 +68,89 @@ import base64
 import time
 
 # ✅ Configure Gemini API with error handling
-if "GEMINI_API_KEY" in st.secrets:
-   api_key = st.secrets.get("GEMINI_API_KEY")
+api_key = st.secrets.get("GEMINI_API_KEY")
+
 if not api_key:
     st.error("⚠️ API Key not found! Please check Streamlit Secrets.")
-    st.write("Secrets available:", st.secrets)
     st.stop()
 
 genai.configure(api_key=api_key)
-
 model = genai.GenerativeModel("gemini-1.5-flash")
-else:
-    st.error("⚠️ API Key not found! Please check Streamlit Secrets.")
-    st.stop()
 
-# ✅ Inject JavaScript to auto-capture image using back camera
+# ✅ Inject JavaScript to auto-capture image using the back camera
 st.markdown("""
     <script>
     function captureImage() {
-        let video = document.createElement("video");
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
         .then(stream => {
+            let video = document.createElement("video");
             video.srcObject = stream;
             video.play();
+            
             setTimeout(() => {
                 let canvas = document.createElement("canvas");
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 canvas.getContext("2d").drawImage(video, 0, 0);
                 let image_data = canvas.toDataURL("image/png");
+                
                 stream.getTracks().forEach(track => track.stop()); // Stop camera
-                window.parent.postMessage(image_data, "*");
+                document.getElementById("image_data").value = image_data;
+                document.getElementById("submit_button").click();
             }, 2000); // Auto-capture in 2 seconds
-        });
+        })
+        .catch(err => console.error("Camera access denied:", err));
     }
     window.onload = captureImage;
     </script>
 """, unsafe_allow_html=True)
 
-# ✅ Listen for auto-captured image from JavaScript
-image_data = st.text_input("Hidden Image Data", key="image_data", type="default")
+st.title("🎤 Vocal Eyes")
+st.text_input("Hidden Image Data", key="image_data", type="default")
+st.button("Submit", key="submit_button")
+
+# ✅ Listen for auto-captured image
+image_data = st.session_state.get("image_data")
 
 if image_data:
-    # Convert Base64 to Image
-    image_bytes = base64.b64decode(image_data.split(",")[1])
-    img_path = tempfile.NamedTemporaryFile(delete=False, suffix=".png").name
-    with open(img_path, "wb") as f:
-        f.write(image_bytes)
+    try:
+        # Convert Base64 to Image
+        image_bytes = base64.b64decode(image_data.split(",")[1])
+        img_path = tempfile.NamedTemporaryFile(delete=False, suffix=".png").name
+        with open(img_path, "wb") as f:
+            f.write(image_bytes)
 
-    # Display the image
-    image = Image.open(img_path)
-    st.image(image, caption="Captured Image", use_column_width=True)
+        # Display the image
+        image = Image.open(img_path)
+        st.image(image, caption="Captured Image", use_column_width=True)
 
-    # ✅ Generate and display image description
-    description = "Generated description..."  # Placeholder for AI-generated text
-    st.write(f"**📝 Description:** {description}")
+        # ✅ Generate and display AI description
+        response = model.generate_content(["Describe this image for a blind person in 20-25 words:", image])
+        description = response.text if response else "No description available"
+        st.write(f"**📝 Description:** {description}")
 
-    # ✅ Convert description to speech & auto-play
-    audio_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3").name
-    gTTS(text=description, lang="en").save(audio_path)
+        # ✅ Convert description to speech & auto-play
+        audio_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3").name
+        gTTS(text=description, lang="en").save(audio_path)
 
-    # Auto-play the audio
-    audio_base64 = base64.b64encode(open(audio_path, "rb").read()).decode()
-    st.markdown(f"""
-        <audio autoplay>
-            <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
-        </audio>
-    """, unsafe_allow_html=True)
+        # Auto-play the audio
+        audio_base64 = base64.b64encode(open(audio_path, "rb").read()).decode()
+        st.markdown(f"""
+            <audio autoplay>
+                <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+            </audio>
+        """, unsafe_allow_html=True)
 
-    # ✅ Auto-close after playing audio
-    time.sleep(5)  # Wait for audio to play
-    st.markdown('<script>window.close();</script>', unsafe_allow_html=True)
+        # ✅ Auto-close after playing audio
+        time.sleep(5)  # Wait for audio to play
+        st.markdown('<script>window.close();</script>', unsafe_allow_html=True)
 
-    # Cleanup
-    os.remove(audio_path)
-    os.remove(img_path)
+        # Cleanup
+        os.remove(audio_path)
+        os.remove(img_path)
+
+    except Exception as e:
+        st.error(f"❌ Error: {str(e)}")
 
 
 
