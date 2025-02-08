@@ -1,5 +1,7 @@
 opencv-python-headless
 google-generativeai
 gtts
+google-cloud-texttospeech
+
 
 
