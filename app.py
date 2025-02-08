@@ -1,12 +1,12 @@
+
 import streamlit as st
 import google.generativeai as genai
 from gtts import gTTS
 import os
 import tempfile
 from PIL import Image
-import time
 
-# Configure Gemini API
+# ✅ Configure Gemini API with error handling
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     model = genai.GenerativeModel("gemini-1.5-flash")
@@ -33,56 +33,25 @@ def text_to_speech(text):
         st.error(f"Text-to-speech error: {e}")
         return None
 
-# Streamlit UI
+# ✅ Streamlit UI
 st.title("🎤 Vocal Eyes")
 
-# Initialize session state
-if 'stage' not in st.session_state:
-    st.session_state.stage = 'init'
-    st.session_state.start_time = time.time()
+# ✅ Use Streamlit Camera Input (better for web apps)
+image_file = st.camera_input("📷 Capture or Upload an Image")
 
-# JavaScript for camera initialization
-st.markdown(
-    """
-    <script>
-        setTimeout(function() {
-            var camInput = document.querySelector("input[type='file']");
-            if (camInput) { camInput.click(); }
-        }, 500);
-    </script>
-    """,
-    unsafe_allow_html=True
-)
+if image_file:
+    # Open the image and display it
+    image = Image.open(image_file)
+    st.image(image, caption="Captured Image", use_column_width=True)
 
-# Handle different stages
-if st.session_state.stage == 'init':
-    countdown = 3 - int(time.time() - st.session_state.start_time)
-    if countdown > 0:
-        st.write(f"📸 Capturing in {countdown} seconds...")
-    else:
-        st.session_state.stage = 'capture'
-        st.rerun()
+    # Generate and display image description
+    description = generate_description(image)
+    st.write(f"**📝 Description:** {description}")
 
-elif st.session_state.stage == 'capture':
-    image_file = st.camera_input("Capturing...")
-    
-    if image_file:
-        # Process the captured image
-        image = Image.open(image_file)
-        st.image(image, caption="Captured Image", use_column_width=True)
-        
-        # Generate and display image description
-        description = generate_description(image)
-        st.write(f"**📝 Description:** {description}")
-        
-        # Convert description to speech and play audio
-        audio_path = text_to_speech(description)
-        if audio_path:
-            st.audio(audio_path, format="audio/mp3")
-            st.write("✅ **Processing complete**")
-            
-            # Reset for next capture
-            if st.button("Take Another Photo"):
-                st.session_state.stage = 'init'
-                st.session_state.start_time = time.time()
-                st.rerun()
+    # Convert description to speech and play audio
+    audio_path = text_to_speech(description)
+    if audio_path:
+        st.audio(audio_path, format="audio/mp3")
+
+    # Cleanup (optional)
+    os.remove(audio_path)
