@@ -2,6 +2,8 @@ opencv-python-headless
 google-generativeai
 gtts
 google-cloud-texttospeech
+streamlit-webrtc
+
 
 
 
