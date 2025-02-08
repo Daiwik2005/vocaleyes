@@ -76,4 +76,4 @@ if image_file:
     # Convert description to speech and play audio
     audio_path = text_to_speech(description)
     if audio_path:
-        st.audio(audio_path, format="audio/mp3")
+        autoplay_audio(audio_path)
