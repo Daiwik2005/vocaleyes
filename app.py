@@ -138,7 +138,7 @@ import tempfile
 from PIL import Image
 
 # Configure Gemini API (Use Streamlit secrets instead of hardcoding keys)
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+genai.configure(api_key=st.secrets["AIzaSyDjEPSblr8blzV2UQGERglL7SlGWQINa3I"])
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 def capture_image():
