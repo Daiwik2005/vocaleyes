@@ -56,15 +56,14 @@
 
 #     # Cleanup (optional)
 #     os.remove(audio_path)
-
 import streamlit as st
 import google.generativeai as genai
 from gtts import gTTS
+import base64
 import os
 import tempfile
 from PIL import Image
-import base64
-import time
+from io import BytesIO
 
 # ✅ Configure Gemini API
 if "GEMINI_API_KEY" in st.secrets:
@@ -76,7 +75,7 @@ else:
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-1.5-flash")
 
-# ✅ JavaScript for Auto-Capturing Image
+# ✅ JavaScript to capture image and send it to Streamlit
 st.markdown(
     """
     <script>
@@ -90,7 +89,8 @@ st.markdown(
                 let canvas = document.createElement("canvas");
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
-                canvas.getContext("2d").drawImage(video, 0, 0);
+                let ctx = canvas.getContext("2d");
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 let image_data = canvas.toDataURL("image/png");
                 stream.getTracks().forEach(track => track.stop()); // Stop camera
                 document.getElementById("image_data").value = image_data;
@@ -104,30 +104,28 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ✅ Hidden Input to Store Image Data
+# ✅ Hidden input field to store captured image
 image_data = st.text_input("Hidden Image Data", key="image_data")
 st.markdown('<button id="submit_button" style="display:none;">Submit</button>', unsafe_allow_html=True)
 
 if image_data and "," in image_data:
     try:
-        # ✅ Convert Base64 to Image
+        # ✅ Decode Base64 image
         image_bytes = base64.b64decode(image_data.split(",")[1])
-        img_path = tempfile.NamedTemporaryFile(delete=False, suffix=".png").name
-        with open(img_path, "wb") as f:
-            f.write(image_bytes)
+        img = Image.open(BytesIO(image_bytes))
 
-        # ✅ Display the Captured Image
-        image = Image.open(img_path)
-        st.image(image, caption="📷 Captured Image", use_column_width=True)
+        # ✅ Display the captured image
+        st.image(img, caption="📷 Captured Image", use_column_width=True)
 
-        # ✅ Generate Description
-        response = model.generate_content(["Describe this image for a blind person in 20-25 words:", image])
-        description = response.text if response else "No description available"
+        # ✅ Generate AI description
+        response = model.generate_content(["Describe this image for a blind person in 20-25 words:", img])
+        description = response.text if response else "No description available."
         st.write(f"**📝 Description:** {description}")
 
-        # ✅ Convert to Speech & Auto-Play
+        # ✅ Convert description to speech
+        tts = gTTS(text=description, lang="en")
         audio_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3").name
-        gTTS(text=description, lang="en").save(audio_path)
+        tts.save(audio_path)
         audio_base64 = base64.b64encode(open(audio_path, "rb").read()).decode()
 
         st.markdown(
@@ -139,14 +137,11 @@ if image_data and "," in image_data:
             unsafe_allow_html=True,
         )
 
-        # ✅ Auto-close after Playing Audio
-        time.sleep(5)
-        st.markdown('<script>window.close();</script>', unsafe_allow_html=True)
+        # ✅ Close app after 5 seconds
+        st.markdown('<script>setTimeout(() => window.close(), 5000);</script>', unsafe_allow_html=True)
 
         # Cleanup
         os.remove(audio_path)
-        os.remove(img_path)
 
     except Exception as e:
         st.error(f"❌ Error: {str(e)}")
-
