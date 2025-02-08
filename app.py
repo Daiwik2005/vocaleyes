@@ -1,4 +1,3 @@
-
 import streamlit as st
 import google.generativeai as genai
 from gtts import gTTS
@@ -6,7 +5,7 @@ import os
 import tempfile
 from PIL import Image
 
-# ✅ Configure Gemini API with error handling
+# Configure Gemini API
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     model = genai.GenerativeModel("gemini-1.5-flash")
@@ -33,25 +32,47 @@ def text_to_speech(text):
         st.error(f"Text-to-speech error: {e}")
         return None
 
-# ✅ Streamlit UI
+# Streamlit UI
 st.title("🎤 Vocal Eyes")
 
-# ✅ Use Streamlit Camera Input (better for web apps)
-image_file = st.camera_input("📷 Capture or Upload an Image")
+# JavaScript to trigger camera and auto-capture
+st.markdown("""
+    <script>
+        // Function to trigger camera and capture
+        function autoCapture() {
+            // Find the camera button and click it
+            var camButton = document.querySelector('.stCamera button');
+            if (camButton) {
+                camButton.click();
+                
+                // Wait briefly and then find and click the capture button
+                setTimeout(function() {
+                    var captureButton = document.querySelector('.stCamera button[data-testid="camera-button"]');
+                    if (captureButton) {
+                        captureButton.click();
+                    }
+                }, 3000);  // Wait 3 seconds before capturing
+            }
+        }
+        
+        // Run auto-capture when page loads
+        setTimeout(autoCapture, 1000);
+    </script>
+""", unsafe_allow_html=True)
+
+# Camera input
+image_file = st.camera_input("Auto Capturing...")
 
 if image_file:
-    # Open the image and display it
+    # Process the captured image
     image = Image.open(image_file)
     st.image(image, caption="Captured Image", use_column_width=True)
-
+    
     # Generate and display image description
     description = generate_description(image)
     st.write(f"**📝 Description:** {description}")
-
+    
     # Convert description to speech and play audio
     audio_path = text_to_speech(description)
     if audio_path:
         st.audio(audio_path, format="audio/mp3")
-
-    # Cleanup (optional)
-    os.remove(audio_path)
