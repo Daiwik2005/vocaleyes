@@ -70,8 +70,14 @@ import time
 
 # ✅ Configure Gemini API with error handling
 if "GEMINI_API_KEY" in st.secrets:
-    st.write("API Key:", st.secrets.get("GEMINI_API_KEY"))
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+   api_key = st.secrets.get("GEMINI_API_KEY")
+if not api_key:
+    st.error("⚠️ API Key not found! Please check Streamlit Secrets.")
+    st.write("Secrets available:", st.secrets)
+    st.stop()
+
+genai.configure(api_key=api_key)
+
     model = genai.GenerativeModel("gemini-1.5-flash")
 else:
     st.error("⚠️ API Key not found! Please check Streamlit Secrets.")
