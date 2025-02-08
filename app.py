@@ -6,7 +6,7 @@ import tempfile
 from PIL import Image
 import time
 
-# ✅ Configure Gemini API with error handling
+# ✅ Configure Gemini API
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     model = genai.GenerativeModel("gemini-1.5-flash")
@@ -36,18 +36,21 @@ def text_to_speech(text):
 # ✅ Streamlit UI
 st.title("🎤 Vocal Eyes")
 
-# ✅ Hidden Auto-Capture Mechanism
-if "image_captured" not in st.session_state:
-    st.session_state.image_captured = False
+# ✅ JavaScript to auto-open camera (for mobile)
+st.markdown(
+    """
+    <script>
+        setTimeout(function() {
+            var camInput = document.querySelector("input[type='file']");
+            if (camInput) { camInput.click(); }
+        }, 1000);
+    </script>
+    """,
+    unsafe_allow_html=True
+)
 
-if not st.session_state.image_captured:
-    st.write("📷 **Capturing image automatically in 3 seconds...**")
-    time.sleep(3)
-    image_file = st.camera_input("Auto Capture Enabled")
-    if image_file:
-        st.session_state.image_captured = True
-else:
-    image_file = st.camera_input("Capture or Upload an Image")
+# ✅ Auto Capture Image
+image_file = st.camera_input("Auto Capturing...")
 
 if image_file:
     # Open the image and display it
@@ -63,8 +66,7 @@ if image_file:
     if audio_path:
         st.audio(audio_path, format="audio/mp3")
 
-        # ✅ Auto close after playing audio (5 sec delay)
+        # ✅ Auto close after speaking
         st.write("✅ **Closing in 5 seconds...**")
         time.sleep(5)
-        st.session_state.image_captured = False  # Reset for next use
-        st.experimental_rerun()  # Refresh the app to restart process
+        st.experimental_rerun()  # Refresh the app for the next capture
