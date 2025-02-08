@@ -1,8 +1,9 @@
 import streamlit as st
 import google.generativeai as genai
-from gtts import gTTS
+from google.cloud import texttospeech
 import os
 import tempfile
+import base64
 from PIL import Image
 import time
 
@@ -14,6 +15,14 @@ else:
     st.error("⚠️ API Key not found! Please check Streamlit Secrets.")
     st.stop()
 
+# ✅ Configure Google Cloud TTS
+if "GOOGLE_APPLICATION_CREDENTIALS" in st.secrets:
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = st.secrets["GOOGLE_APPLICATION_CREDENTIALS"]
+    client = texttospeech.TextToSpeechClient()
+else:
+    st.error("⚠️ Google Cloud TTS Key missing! Please set GOOGLE_APPLICATION_CREDENTIALS.")
+    st.stop()
+
 def generate_description(image):
     """Generates an AI-based description for the given image."""
     try:
@@ -22,16 +31,39 @@ def generate_description(image):
     except Exception as e:
         return f"Error generating description: {str(e)}"
 
-def text_to_speech(text):
-    """Converts text to speech and returns the audio file path."""
+def google_tts(text):
+    """Converts text to speech using Google Cloud TTS and returns audio file path."""
     try:
-        tts = gTTS(text=text, lang="en")
+        synthesis_input = texttospeech.SynthesisInput(text=text)
+        voice = texttospeech.VoiceSelectionParams(language_code="en-US", ssml_gender=texttospeech.SsmlVoiceGender.FEMALE)
+        audio_config = texttospeech.AudioConfig(audio_encoding=texttospeech.AudioEncoding.MP3)
+        
+        response = client.synthesize_speech(input=synthesis_input, voice=voice, audio_config=audio_config)
+        
         tts_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3").name
-        tts.save(tts_path)
+        with open(tts_path, "wb") as out:
+            out.write(response.audio_content)
+        
         return tts_path
     except Exception as e:
-        st.error(f"Text-to-speech error: {e}")
+        st.error(f"Google TTS Error: {e}")
         return None
+
+def autoplay_audio(file_path):
+    """Encodes audio to Base64 and autoplays it."""
+    with open(file_path, "rb") as audio_file:
+        audio_bytes = audio_file.read()
+        audio_base64 = base64.b64encode(audio_bytes).decode()
+
+    # Inject JavaScript + HTML to autoplay
+    st.markdown(
+        f"""
+        <audio autoplay>
+            <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+        </audio>
+        """,
+        unsafe_allow_html=True,
+    )
 
 # ✅ Streamlit UI
 st.title("🎤 Vocal Eyes")
@@ -61,18 +93,10 @@ if image_file:
     description = generate_description(image)
     st.write(f"**📝 Description:** {description}")
 
-    # Convert description to speech and play audio
-    audio_path = text_to_speech(description)
+    # Convert description to speech and autoplay
+    audio_path = google_tts(description)
     if audio_path:
-        # ✅ JavaScript for Autoplay Audio
-        st.markdown(
-            f"""
-            <audio autoplay>
-                <source src="data:audio/mp3;base64,{open(audio_path, "rb").read().encode("base64").decode()}" type="audio/mp3">
-            </audio>
-            """,
-            unsafe_allow_html=True
-        )
+        autoplay_audio(audio_path)
 
         # ✅ Auto close after speaking
         st.write("✅ **Closing in 5 seconds...**")
