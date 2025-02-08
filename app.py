@@ -1,12 +1,12 @@
-
 import streamlit as st
 import google.generativeai as genai
 from gtts import gTTS
 import os
 import tempfile
 from PIL import Image
+import time
 
-# Configure Gemini API
+# ✅ Configure Gemini API
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     model = genai.GenerativeModel("gemini-1.5-flash")
@@ -33,47 +33,48 @@ def text_to_speech(text):
         st.error(f"Text-to-speech error: {e}")
         return None
 
-# Streamlit UI
+# ✅ Streamlit UI
 st.title("🎤 Vocal Eyes")
 
-# JavaScript to trigger camera and auto-capture
-st.markdown("""
+# ✅ JavaScript to auto-open camera (for mobile)
+st.markdown(
+    """
     <script>
-        // Function to trigger camera and capture
-        function autoCapture() {
-            // Find the camera button and click it
-            var camButton = document.querySelector('.stCamera button');
-            if (camButton) {
-                camButton.click();
-                
-                // Wait briefly and then find and click the capture button
-                setTimeout(function() {
-                    var captureButton = document.querySelector('.stCamera button[data-testid="camera-button"]');
-                    if (captureButton) {
-                        captureButton.click();
-                    }
-                }, 3000);  // Wait 3 seconds before capturing
-            }
-        }
-        
-        // Run auto-capture when page loads
-        setTimeout(autoCapture, 1000);
+        setTimeout(function() {
+            var camInput = document.querySelector("input[type='file']");
+            if (camInput) { camInput.click(); }
+        }, 1000);
     </script>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True
+)
 
-# Camera input
+# ✅ Auto Capture Image
 image_file = st.camera_input("Auto Capturing...")
 
 if image_file:
-    # Process the captured image
+    # Open the image and display it
     image = Image.open(image_file)
     st.image(image, caption="Captured Image", use_column_width=True)
-    
+
     # Generate and display image description
     description = generate_description(image)
     st.write(f"**📝 Description:** {description}")
-    
+
     # Convert description to speech and play audio
     audio_path = text_to_speech(description)
     if audio_path:
-        autoplay_audio(audio_path)
+        # ✅ JavaScript for Autoplay Audio
+        st.markdown(
+            f"""
+            <audio autoplay>
+                <source src="data:audio/mp3;base64,{open(audio_path, "rb").read().encode("base64").decode()}" type="audio/mp3">
+            </audio>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # ✅ Auto close after speaking
+        st.write("✅ **Closing in 5 seconds...**")
+        time.sleep(5)
+        st.experimental_rerun()  # Refresh the app for the next capture
