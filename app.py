@@ -16,7 +16,7 @@ else:
 def generate_description(image):
     """Generates an AI-based description for the given image."""
     try:
-        response = model.generate_content(["Describe this image:", image])
+        response = model.generate_content(["Describe this image for a blind person in 20 words:", image])
         return response.text if response else "No description available"
     except Exception as e:
         return f"Error generating description: {str(e)}"
