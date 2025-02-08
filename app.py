@@ -44,7 +44,7 @@ def text_to_speech(text):
 # ✅ Streamlit UI
 st.title("🎤 Vocal Eyes")
 
-# ✅ JavaScript to access **rear camera** and take an automatic picture
+# ✅ Custom Camera UI to Force Rear Camera & Auto Capture
 st.markdown("""
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas" style="display:none;"></canvas>
@@ -82,8 +82,8 @@ st.markdown("""
     </script>
 """, unsafe_allow_html=True)
 
-# ✅ Image Capture
-image_file = st.file_uploader("Or Upload an Image", type=["png", "jpg", "jpeg"])
+# ✅ Display Captured Image & Process It
+image_file = st.camera_input("Auto Capturing...")  # Camera input to receive captured image
 
 if image_file:
     # Open the image and display it
