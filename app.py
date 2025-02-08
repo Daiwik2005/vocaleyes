@@ -36,12 +36,12 @@ def text_to_speech(text):
 # Streamlit UI
 st.title("🎤 Vocal Eyes")
 
-# Initialize session state for countdown
-if 'countdown_started' not in st.session_state:
-    st.session_state.countdown_started = False
-    st.session_state.capture_time = None
+# Initialize session state
+if 'stage' not in st.session_state:
+    st.session_state.stage = 'init'
+    st.session_state.start_time = time.time()
 
-# JavaScript for camera initialization and countdown
+# JavaScript for camera initialization
 st.markdown(
     """
     <script>
@@ -54,43 +54,35 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Camera input placeholder
-camera_placeholder = st.empty()
-
-# Start countdown if not already started
-if not st.session_state.countdown_started:
-    st.session_state.countdown_started = True
-    st.session_state.capture_time = time.time() + 3
-
-# Display countdown
-if st.session_state.countdown_started and st.session_state.capture_time:
-    remaining_time = max(0, int(st.session_state.capture_time - time.time()))
-    if remaining_time > 0:
-        st.write(f"📸 Capturing in {remaining_time} seconds...")
-        time.sleep(1)
-        st.experimental_rerun()
+# Handle different stages
+if st.session_state.stage == 'init':
+    countdown = 3 - int(time.time() - st.session_state.start_time)
+    if countdown > 0:
+        st.write(f"📸 Capturing in {countdown} seconds...")
     else:
-        # Capture image
-        image_file = camera_placeholder.camera_input("Capturing...")
+        st.session_state.stage = 'capture'
+        st.rerun()
+
+elif st.session_state.stage == 'capture':
+    image_file = st.camera_input("Capturing...")
+    
+    if image_file:
+        # Process the captured image
+        image = Image.open(image_file)
+        st.image(image, caption="Captured Image", use_column_width=True)
         
-        if image_file:
-            # Process the captured image
-            image = Image.open(image_file)
-            st.image(image, caption="Captured Image", use_column_width=True)
+        # Generate and display image description
+        description = generate_description(image)
+        st.write(f"**📝 Description:** {description}")
+        
+        # Convert description to speech and play audio
+        audio_path = text_to_speech(description)
+        if audio_path:
+            st.audio(audio_path, format="audio/mp3")
+            st.write("✅ **Processing complete**")
             
-            # Generate and display image description
-            description = generate_description(image)
-            st.write(f"**📝 Description:** {description}")
-            
-            # Convert description to speech and play audio
-            audio_path = text_to_speech(description)
-            if audio_path:
-                st.audio(audio_path, format="audio/mp3")
-                
-                # Auto close after speaking
-                st.write("✅ **Closing in 5 seconds...**")
-                time.sleep(5)
-                # Reset session state and rerun
-                st.session_state.countdown_started = False
-                st.session_state.capture_time = None
-                st.experimental_rerun()
+            # Reset for next capture
+            if st.button("Take Another Photo"):
+                st.session_state.stage = 'init'
+                st.session_state.start_time = time.time()
+                st.rerun()
