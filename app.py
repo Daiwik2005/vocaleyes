@@ -223,8 +223,6 @@
 #         st.markdown(audio_html, unsafe_allow_html=True)
 
 
-
-
 import streamlit as st
 import google.generativeai as genai
 from gtts import gTTS
