@@ -106,122 +106,6 @@
 # #         st.markdown(audio_html, unsafe_allow_html=True)
 
 
-# import streamlit as st
-# import google.generativeai as genai
-# from gtts import gTTS
-# import os
-# import tempfile
-# import base64
-# from PIL import Image
-# from streamlit_javascript import st_javascript
-
-# # ✅ Configure Gemini API
-# if "GEMINI_API_KEY" in st.secrets:
-#     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-#     model = genai.GenerativeModel("gemini-1.5-flash")
-# else:
-#     st.error("⚠️ API Key not found! Please check Streamlit Secrets.")
-#     st.stop()
-
-# def generate_description(image):
-#     """Generates an AI-based description for the given image."""
-#     try:
-#         response = model.generate_content(["Describe this image in detail for a blind person in 40 words:", image])
-#         return response.text if response else "No description available"
-#     except Exception as e:
-#         return f"Error generating description: {str(e)}"
-
-# def text_to_speech(text):
-#     """Converts text to speech using gTTS and returns the base64 audio string."""
-#     try:
-#         tts = gTTS(text=text, lang="en")
-#         tts_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3").name
-#         tts.save(tts_path)
-        
-#         # Convert to base64 for embedding in HTML
-#         with open(tts_path, "rb") as audio_file:
-#             audio_base64 = base64.b64encode(audio_file.read()).decode()
-
-#         # Remove temporary file
-#         os.remove(tts_path)
-#         return audio_base64
-#     except Exception as e:
-#         st.error(f"Text-to-speech error: {e}")
-#         return None
-
-# # ✅ Streamlit UI
-# st.title("🎤 Vocal Eyes")
-
-# # ✅ JavaScript for Long Press & Double Tap with polling to attach events
-# # This script checks every 500ms for the file input element (from st.camera_input)
-# # Once it finds it, it attaches touch event listeners.
-# gesture_script = """
-# (function() {
-#     function attachListeners() {
-#         let cameraInput = document.querySelector('input[type="file"]');
-#         if (cameraInput) {
-#             let pressTimer;
-#             let lastTap = 0;
-            
-#             cameraInput.addEventListener("touchstart", function(event) {
-#                 pressTimer = setTimeout(function() {
-#                     // Long press detected: trigger click to open camera
-#                     cameraInput.click();
-#                 }, 1500); // 1.5 seconds for long press
-#             });
-            
-#             cameraInput.addEventListener("touchend", function(event) {
-#                 clearTimeout(pressTimer);
-#                 let currentTime = new Date().getTime();
-#                 let tapLength = currentTime - lastTap;
-#                 if (tapLength < 300 && tapLength > 0) {
-#                     // Double tap detected:
-#                     // Attempt to switch to the back camera by setting the capture attribute to "environment"
-#                     cameraInput.setAttribute('capture', 'environment');
-#                     cameraInput.click();
-#                 }
-#                 lastTap = currentTime;
-#             });
-#             return true; // listeners attached
-#         }
-#         return false;
-#     }
-    
-#     var intervalId = setInterval(function() {
-#         if (attachListeners()) {
-#             clearInterval(intervalId);
-#         }
-#     }, 500);
-# })();
-# """
-
-# # Run the JS code
-# st_javascript(gesture_script, key="gesture_js")
-
-# # ✅ Camera input
-# image_file = st.camera_input("Long Press to Capture Image, Double Tap for Back Camera")
-
-# if image_file:
-#     # Open the image and display it
-#     image = Image.open(image_file)
-#     st.image(image, caption="Captured Image", use_column_width=True)
-
-#     # Generate and display image description
-#     description = generate_description(image)
-#     st.write(f"**📝 Description:** {description}")
-
-#     # Convert description to speech and play audio
-#     audio_base64 = text_to_speech(description)
-    
-#     if audio_base64:
-#         # Embed base64 audio in HTML for auto-play
-#         audio_html = f"""
-#             <audio autoplay>
-#                 <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
-#             </audio>
-#         """
-#         st.markdown(audio_html, unsafe_allow_html=True)
-
 import streamlit as st
 import google.generativeai as genai
 from gtts import gTTS
@@ -229,6 +113,7 @@ import os
 import tempfile
 import base64
 from PIL import Image
+from streamlit_javascript import st_javascript
 
 # ✅ Configure Gemini API
 if "GEMINI_API_KEY" in st.secrets:
@@ -267,23 +152,54 @@ def text_to_speech(text):
 # ✅ Streamlit UI
 st.title("🎤 Vocal Eyes")
 
-# ✅ HTML & JavaScript to Trigger Camera with Rear Camera Option
-st.markdown("""
-    <input type="file" accept="image/*" capture="environment" id="cameraInput" style="display:none">
-    <button onclick="document.getElementById('cameraInput').click();" style="
-        background-color: #4CAF50;
-        color: white;
-        padding: 12px 20px;
-        font-size: 18px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        margin-top: 10px;
-    ">📷 Take a Picture</button>
-""", unsafe_allow_html=True)
+# ✅ JavaScript for Long Press & Double Tap with polling to attach events
+# This script checks every 500ms for the file input element (from st.camera_input)
+# Once it finds it, it attaches touch event listeners.
+gesture_script = """
+(function() {
+    function attachListeners() {
+        let cameraInput = document.querySelector('input[type="file"]');
+        if (cameraInput) {
+            let pressTimer;
+            let lastTap = 0;
+            
+            cameraInput.addEventListener("touchstart", function(event) {
+                pressTimer = setTimeout(function() {
+                    // Long press detected: trigger click to open camera
+                    cameraInput.click();
+                }, 1500); // 1.5 seconds for long press
+            });
+            
+            cameraInput.addEventListener("touchend", function(event) {
+                clearTimeout(pressTimer);
+                let currentTime = new Date().getTime();
+                let tapLength = currentTime - lastTap;
+                if (tapLength < 300 && tapLength > 0) {
+                    // Double tap detected:
+                    // Attempt to switch to the back camera by setting the capture attribute to "environment"
+                    cameraInput.setAttribute('capture', 'environment');
+                    cameraInput.click();
+                }
+                lastTap = currentTime;
+            });
+            return true; // listeners attached
+        }
+        return false;
+    }
+    
+    var intervalId = setInterval(function() {
+        if (attachListeners()) {
+            clearInterval(intervalId);
+        }
+    }, 500);
+})();
+"""
 
-# ✅ Hidden File Uploader (Will Automatically Use Rear Camera)
-image_file = st.file_uploader("Upload Image", type=["png", "jpg", "jpeg"], label_visibility="hidden")
+# Run the JS code
+st_javascript(gesture_script, key="gesture_js")
+
+# ✅ Camera input
+image_file = st.camera_input("Long Press to Capture Image, Double Tap for Back Camera")
 
 if image_file:
     # Open the image and display it
