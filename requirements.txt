@@ -4,6 +4,7 @@ gtts
 google-cloud-texttospeech
 streamlit-webrtc
 streamlit_javascript
+deep-translator
 
 
 
