@@ -222,7 +222,6 @@
 #         """
 #         st.markdown(audio_html, unsafe_allow_html=True)
 
-
 import streamlit as st
 import google.generativeai as genai
 from gtts import gTTS
@@ -230,7 +229,6 @@ import os
 import tempfile
 import base64
 from PIL import Image
-from streamlit_javascript import st_javascript
 
 # ✅ Configure Gemini API
 if "GEMINI_API_KEY" in st.secrets:
@@ -269,20 +267,23 @@ def text_to_speech(text):
 # ✅ Streamlit UI
 st.title("🎤 Vocal Eyes")
 
-# ✅ JavaScript to trigger file input from a button
-trigger_camera_script = """
-    var fileInput = document.querySelector('input[type="file"]');
-    if (fileInput) {
-        fileInput.click();
-    }
-"""
+# ✅ HTML & JavaScript to Trigger Camera with Rear Camera Option
+st.markdown("""
+    <input type="file" accept="image/*" capture="environment" id="cameraInput" style="display:none">
+    <button onclick="document.getElementById('cameraInput').click();" style="
+        background-color: #4CAF50;
+        color: white;
+        padding: 12px 20px;
+        font-size: 18px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 10px;
+    ">📷 Take a Picture</button>
+""", unsafe_allow_html=True)
 
-# ✅ Button to trigger camera input
-if st.button("📷 Take a Picture"):
-    st_javascript(trigger_camera_script)
-
-# ✅ Hidden camera input
-image_file = st.camera_input("", label_visibility="hidden")
+# ✅ Hidden File Uploader (Will Automatically Use Rear Camera)
+image_file = st.file_uploader("Upload Image", type=["png", "jpg", "jpeg"], label_visibility="hidden")
 
 if image_file:
     # Open the image and display it
