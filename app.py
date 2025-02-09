@@ -323,7 +323,6 @@
 #             </audio>
 #         """
 #         st.markdown(audio_html, unsafe_allow_html=True)
-
 import streamlit as st
 import google.generativeai as genai
 from gtts import gTTS
@@ -331,7 +330,7 @@ import os
 import tempfile
 import base64
 from PIL import Image
-from streamlit_javascript import st_javascript
+from deep_translator import GoogleTranslator  # ✅ Translation support
 
 # ✅ Configure Gemini API
 if "GEMINI_API_KEY" in st.secrets:
@@ -366,6 +365,15 @@ def generate_description(image):
     except Exception as e:
         return f"Error generating description: {str(e)}"
 
+def translate_text(text, target_lang):
+    """Translates text to the target language."""
+    try:
+        translated_text = GoogleTranslator(source="auto", target=target_lang).translate(text)
+        return translated_text
+    except Exception as e:
+        st.error(f"Translation error: {e}")
+        return text  # Return original text if translation fails
+
 def text_to_speech(text, lang_code):
     """Converts text to speech using gTTS and returns the base64 audio string."""
     try:
@@ -397,10 +405,14 @@ if image_file:
 
     # Generate and display image description
     description = generate_description(image)
-    st.write(f"**📝 Description:** {description}")
+    st.write(f"**📝 English Description:** {description}")
 
-    # Convert description to speech in selected language
-    audio_base64 = text_to_speech(description, selected_lang_code)
+    # ✅ Translate description before TTS
+    translated_description = translate_text(description, selected_lang_code)
+    st.write(f"**🌍 Translated Description:** {translated_description}")
+
+    # Convert translated description to speech
+    audio_base64 = text_to_speech(translated_description, selected_lang_code)
     
     if audio_base64:
         # Embed base64 audio in HTML for auto-play
