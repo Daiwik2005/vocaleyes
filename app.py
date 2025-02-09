@@ -5,6 +5,7 @@ import os
 import tempfile
 import base64
 from PIL import Image
+from streamlit_javascript import st_javascript
 
 # ✅ Configure Gemini API
 if "GEMINI_API_KEY" in st.secrets:
@@ -44,43 +45,41 @@ def text_to_speech(text):
 st.title("🎤 Vocal Eyes")
 
 # ✅ JavaScript for Long Press & Double Tap Camera Capture
-st.markdown("""
-    <script>
-        let pressTimer;
-        let lastTap = 0;
-        
-        document.addEventListener("touchstart", function(event) {
-            pressTimer = setTimeout(function() {
-                var camButton = document.querySelector('.stCamera button');
-                if (camButton) {
-                    camButton.click();
-                    setTimeout(function() {
-                        var captureButton = document.querySelector('.stCamera button[data-testid="camera-button"]');
-                        if (captureButton) {
-                            captureButton.click();
-                        }
-                    }, 500); // Delay to allow camera to open
-                }
-            }, 1500); // Long press for 1.5 seconds
-        });
+gesture_script = """
+    let pressTimer;
+    let lastTap = 0;
 
-        document.addEventListener("touchend", function(event) {
-            clearTimeout(pressTimer);
-            
-            let currentTime = new Date().getTime();
-            let tapLength = currentTime - lastTap;
-            if (tapLength < 300 && tapLength > 0) {
-                // Double Tap Detected
-                var cameraInput = document.querySelector('input[type="file"]');
-                if (cameraInput) {
-                    cameraInput.setAttribute('capture', 'environment'); // Switch to back camera
-                    cameraInput.click();
-                }
-            }
-            lastTap = currentTime;
-        });
-    </script>
-""", unsafe_allow_html=True)
+    document.addEventListener("touchstart", function(event) {
+        pressTimer = setTimeout(function() {
+            window.dispatchEvent(new Event("longPress"));
+        }, 1500); // Long press for 1.5 seconds
+    });
+
+    document.addEventListener("touchend", function(event) {
+        clearTimeout(pressTimer);
+
+        let currentTime = new Date().getTime();
+        let tapLength = currentTime - lastTap;
+        if (tapLength < 300 && tapLength > 0) {
+            window.dispatchEvent(new Event("doubleTap"));
+        }
+        lastTap = currentTime;
+    });
+
+    window.addEventListener("longPress", function() {
+        document.querySelector('input[type="file"]').click();
+    });
+
+    window.addEventListener("doubleTap", function() {
+        let camInput = document.querySelector('input[type="file"]');
+        if (camInput) {
+            camInput.setAttribute('capture', 'environment'); // Switch to back camera
+            camInput.click();
+        }
+    });
+"""
+
+st_javascript(gesture_script)
 
 # ✅ Camera input
 image_file = st.camera_input("Long Press to Capture Image, Double Tap for Back Camera")
