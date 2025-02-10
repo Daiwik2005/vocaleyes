@@ -260,7 +260,7 @@ st.write(f"🌍 Auto-detected Language: **{selected_language}**")
 def generate_description(image):
     """Generates an AI-based description for the given image."""
     try:
-        response = model.generate_content(["Describe this image in detail for a blind person in 40 words:", image])
+        response = model.generate_content(["Describe this image in detail for a blind person in 40 words: and also if possible give me the distance of the object you can display max (in feets)", image])
         return response.text if response else "No description available"
     except Exception as e:
         return f"Error generating description: {str(e)}"
