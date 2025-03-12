@@ -6,7 +6,6 @@ streamlit-webrtc
 streamlit_javascript
 deep-translator
 streamlit
-ultralytics
 
 
 
