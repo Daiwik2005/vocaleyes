@@ -269,23 +269,44 @@ def translate_text(text, target_lang):
             return text  # Return original text if translation fails
     return text
 
+# def text_to_speech(text, lang_code):
+#     """Converts text to speech using gTTS and returns the base64 audio string."""
+#     try:
+#         tts = gTTS(text=text, lang=lang_code)
+#         tts_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3").name
+#         tts.save(tts_path)
+        
+#         # Convert to base64 for embedding in HTML
+#         with open(tts_path, "rb") as audio_file:
+#             audio_base64 = base64.b64encode(audio_file.read()).decode()
+
+#         # Remove temporary file
+#         os.remove(tts_path)
+#         return audio_base64
+#     except Exception as e:
+#         st.error(f"Text-to-speech error: {e}")
+#         return None
+
 def text_to_speech(text, lang_code):
-    """Converts text to speech using gTTS and returns the base64 audio string."""
+    """Converts text to speech using gTTS with natural pauses."""
     try:
-        tts = gTTS(text=text, lang=lang_code)
+        # Add natural pauses
+        formatted_text = text.replace(".", "... ").replace("!", "!!! ").replace(",", ", ")
+
+        tts = gTTS(text=formatted_text, lang=lang_code)
         tts_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3").name
         tts.save(tts_path)
-        
+
         # Convert to base64 for embedding in HTML
         with open(tts_path, "rb") as audio_file:
             audio_base64 = base64.b64encode(audio_file.read()).decode()
 
-        # Remove temporary file
         os.remove(tts_path)
         return audio_base64
     except Exception as e:
         st.error(f"Text-to-speech error: {e}")
         return None
+
 
 # ✅ Streamlit UI
 st.title("🎤 Vocal Eyes")
