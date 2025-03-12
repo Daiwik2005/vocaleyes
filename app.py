@@ -254,7 +254,7 @@ st.write(f"🌍 Auto-detected Language: **{selected_language}**")
 def generate_description(image):
     """Generates an AI-based description for the given image."""
     try:
-        response = model.generate_content(["Describe this image in detail for a blind person in 40 words; identify money denominations and warn about similar notes, assess furniture safety, indicate if a road is busy or empty, describe food temperature, detect smartphone position, prioritize key objects, request retake if unclear, and measure distance if possible. no need to mention if you havent found one of them", image])
+        response = model.generate_content(["Describe this image in detail for a blind person in 40 words: and also if possible give me the distance of the object you can display max (in feets). if you cant measure the distance or if the pic is not clear tell me to take the pic directly again", image])
         return response.text if response else "No description available"
     except Exception as e:
         return f"Error generating description: {str(e)}"
@@ -269,38 +269,18 @@ def translate_text(text, target_lang):
             return text  # Return original text if translation fails
     return text
 
-# def text_to_speech(text, lang_code):
-#     """Converts text to speech using gTTS and returns the base64 audio string."""
-#     try:
-#         tts = gTTS(text=text, lang=lang_code)
-#         tts_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3").name
-#         tts.save(tts_path)
-        
-#         # Convert to base64 for embedding in HTML
-#         with open(tts_path, "rb") as audio_file:
-#             audio_base64 = base64.b64encode(audio_file.read()).decode()
-
-#         # Remove temporary file
-#         os.remove(tts_path)
-#         return audio_base64
-#     except Exception as e:
-#         st.error(f"Text-to-speech error: {e}")
-#         return None
-
 def text_to_speech(text, lang_code):
-    """Converts text to speech using gTTS with natural pauses."""
+    """Converts text to speech using gTTS and returns the base64 audio string."""
     try:
-        # Add natural pauses
-        formatted_text = text.replace(".", "... ").replace("!", "!!! ").replace(",", ", ")
-
-        tts = gTTS(text=formatted_text, lang=lang_code)
+        tts = gTTS(text=text, lang=lang_code)
         tts_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3").name
         tts.save(tts_path)
-
+        
         # Convert to base64 for embedding in HTML
         with open(tts_path, "rb") as audio_file:
             audio_base64 = base64.b64encode(audio_file.read()).decode()
 
+        # Remove temporary file
         os.remove(tts_path)
         return audio_base64
     except Exception as e:
