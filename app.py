@@ -211,6 +211,7 @@
 
 
 import streamlit as st
+import streamlit.components.v1 as components
 import google.generativeai as genai
 from gtts import gTTS
 import os
@@ -317,13 +318,16 @@ if image_file:
         """
         st.markdown(audio_html, unsafe_allow_html=True)
 
-BEEP_SOUND = """
+
+BEEP_SOUND_HTML = """
+<!DOCTYPE html>
+<html>
+<body>
     <audio id="beepSound" preload="auto">
         <source src="https://www.soundjay.com/button/beep-07.wav" type="audio/wav">
     </audio>
     <script>
-        // Play beep sound when the page loads
-        window.onload = function() {
+        document.addEventListener("DOMContentLoaded", function() {
             var audio = document.getElementById("beepSound");
             var playPromise = audio.play();
 
@@ -340,10 +344,12 @@ BEEP_SOUND = """
             if ("vibrate" in navigator) {
                 navigator.vibrate(200);
             }
-        };
+        });
     </script>
+</body>
+</html>
 """
 
-st.markdown(BEEP_SOUND, unsafe_allow_html=True)
+components.html(BEEP_SOUND_HTML, height=0)
 
 
