@@ -289,6 +289,14 @@ def text_to_speech(text, lang_code):
 
 # ✅ Streamlit UI
 st.title("🎤 Vocal Eyes")
+# ✅ Play a startup beep sound
+beep_audio_html = """
+    <audio autoplay>
+        <source src="https://www.soundjay.com/button/beep-07.wav" type="audio/wav">
+    </audio>
+"""
+st.markdown(beep_audio_html, unsafe_allow_html=True)
+
 
 # ✅ Camera input
 image_file = st.camera_input("Capture Image")
