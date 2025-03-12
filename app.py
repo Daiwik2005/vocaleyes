@@ -317,17 +317,4 @@ if image_file:
         """
         st.markdown(audio_html, unsafe_allow_html=True)
 
-BEEP_SOUND = """
-    <video autoplay hidden>
-        <source src="https://www.soundjay.com/button/beep-07.wav" type="audio/wav">
-    </video>
-    <script>
-        // Vibrate on mobile (optional)
-        if ("vibrate" in navigator) {
-            navigator.vibrate(200);
-        }
-    </script>
-"""
-st.markdown(BEEP_SOUND, unsafe_allow_html=True)
-
 
