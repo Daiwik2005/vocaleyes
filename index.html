@@ -44,8 +44,7 @@
 <body>
     <h2>Vocal Eyes - Image Description</h2>
     <div id="status">Processing image...</div>
-
-<!--     <script>
+    <script>
         async function processImage() {
             try {
                 const response = await fetch("http://127.0.0.1:5000/");
@@ -72,35 +71,6 @@
             var audio = new Audio("https://www.soundjay.com/button/beep-07.wav");
             audio.play();
         }
-    </script> -->
-    <script>
-    async function processImage() {
-        try {
-            const response = await fetch("http://127.0.0.1:5000/");
-            const data = await response.json();
-            
-            if (data.description) {
-                document.getElementById('status').textContent = 
-                    `Description: ${data.description}`;
-            } else {
-                document.getElementById('status').textContent = 
-                    'Failed to process image';
-            }
-        } catch (error) {
-            console.error("Error:", error);
-            document.getElementById('status').textContent = 
-                'Error connecting to backend';
-        }
-    }
-
-    window.onload = function() {
-        processImage();  // Call image processing
-
-        // Play beep sound
-        var audio = new Audio("https://www.soundjay.com/button/beep-07.wav");
-        audio.play().catch(error => console.log("Autoplay blocked:", error));
-    };
-</script>
-
+    </script>
 </body>
 </html>
