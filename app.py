@@ -289,14 +289,22 @@ def text_to_speech(text, lang_code):
 
 # ✅ Streamlit UI
 st.title("🎤 Vocal Eyes")
-# ✅ Play a startup beep sound
+####
 beep_audio_html = """
-    <audio autoplay>
+    <audio id="beep-sound" autoplay>
         <source src="https://www.soundjay.com/button/beep-07.wav" type="audio/wav">
     </audio>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var audio = document.getElementById("beep-sound");
+            audio.play().catch(error => console.log("Autoplay blocked. Waiting for user interaction."));
+        });
+    </script>
 """
-st.markdown(beep_audio_html, unsafe_allow_html=True)
 
+st.markdown(beep_audio_html, unsafe_allow_html=True)
+st.write("Welcome to VocalEyes! Click anywhere if the beep doesn't play.")
+#####
 
 # ✅ Camera input
 image_file = st.camera_input("Capture Image")
