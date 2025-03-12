@@ -317,4 +317,33 @@ if image_file:
         """
         st.markdown(audio_html, unsafe_allow_html=True)
 
+BEEP_SOUND = """
+    <audio id="beepSound" preload="auto">
+        <source src="https://www.soundjay.com/button/beep-07.wav" type="audio/wav">
+    </audio>
+    <script>
+        // Play beep sound when the page loads
+        window.onload = function() {
+            var audio = document.getElementById("beepSound");
+            var playPromise = audio.play();
+
+            if (playPromise !== undefined) {
+                playPromise.catch(() => {
+                    console.log("Autoplay blocked. Waiting for user interaction.");
+                    document.addEventListener("click", () => {
+                        audio.play();
+                    }, { once: true });
+                });
+            }
+
+            // Vibrate if on mobile
+            if ("vibrate" in navigator) {
+                navigator.vibrate(200);
+            }
+        };
+    </script>
+"""
+
+st.markdown(BEEP_SOUND, unsafe_allow_html=True)
+
 
