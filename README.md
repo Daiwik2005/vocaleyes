@@ -58,3 +58,5 @@ Frontend: Streamlit (minimalist web UI)<br>
 AI Model: Google Gemini API (for image description)<br>
 TTS: Streamlit / Python text-to-speech libraries<br>
 Voice Assistant: Google Assistant Action to launch app<br>
+
+Enjoy!!
