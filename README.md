@@ -35,6 +35,8 @@ Streamlit requires secrets to be stored in a .streamlit/secrets.toml file.
 Create a folder named .streamlit in your project root and add a secrets.toml file like this:
 
 <h4># .streamlit/secrets.toml</h4>
+<br>
+
 ```Bash
 [api_keys]
 gemini_api = "your_gemini_api_key_here"
