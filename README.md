@@ -7,11 +7,11 @@ It allows users to trigger the app with a voice command (“Scan”), capture a 
 
 Features
 
-🧠 AI-Powered Description – Generates a short description of the scene.
-🔊 Text-to-Speech – Reads the description out loud.
-🔒 Minimal UI – Designed for accessibility and ease of use.
-🌍 Multi-Language Support – Works in 10+ languages, configurable by the user.
-🤖 Google Assistant Integration – Open the app by saying “Scan”.
+🧠 AI-Powered Description – Generates a short description of the scene.<br>
+🔊 Text-to-Speech – Reads the description out loud.<br>
+🔒 Minimal UI – Designed for accessibility and ease of use.<br>
+🌍 Multi-Language Support – Works in 10+ languages, configurable by the user.<br>
+🤖 Google Assistant Integration – Open the app by saying “Scan”.<br>
 
 
 🚀 Getting Started
@@ -54,7 +54,7 @@ streamlit run app.py
 
 🛠️ Tech Stack
 
-Frontend: Streamlit (minimalist web UI)
-AI Model: Google Gemini API (for image description)
-TTS: Streamlit / Python text-to-speech libraries
-Voice Assistant: Google Assistant Action to launch app
+Frontend: Streamlit (minimalist web UI)<br>
+AI Model: Google Gemini API (for image description)<br>
+TTS: Streamlit / Python text-to-speech libraries<br>
+Voice Assistant: Google Assistant Action to launch app<br>
